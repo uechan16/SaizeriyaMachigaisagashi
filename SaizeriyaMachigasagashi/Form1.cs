@@ -13,6 +13,7 @@ using OpenCvSharp.Util;
 using System.Drawing;
 using Size = OpenCvSharp.Size;
 using Point = OpenCvSharp.Point;
+using System.IO;
 
 namespace SaizeriyaMachigasagashi
 {
@@ -72,7 +73,9 @@ namespace SaizeriyaMachigasagashi
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if(sLeftPictureFile == "")
+            Directory.CreateDirectory("result");
+
+            if (sLeftPictureFile == "")
             {
                 return;
             }
@@ -84,6 +87,7 @@ namespace SaizeriyaMachigasagashi
                 FindContours(sLeftPictureFile, sRightPictureFile);
             });
 
+            
             
         }
 
@@ -176,7 +180,7 @@ namespace SaizeriyaMachigasagashi
             matches = matcher.Match(descriptorLeft, descriptorRight);
 
             Cv2.DrawMatches(Lsrc, keyPointsLeft, Rsrc, keyPointsRight, matches, output);
-            output.SaveImage("output.jpg");
+            output.SaveImage(@"result\output.jpg");
 
             int size = matches.Count();
             var getPtsSrc = new Vec2f[size];
@@ -206,7 +210,7 @@ namespace SaizeriyaMachigasagashi
                 Lsrc, WarpedSrcMat, hom,
                 new OpenCvSharp.Size(Rsrc.Width, Rsrc.Height));
 
-            WarpedSrcMat.SaveImage("Warap.jpg");
+            WarpedSrcMat.SaveImage(@"result\Warap.jpg");
 
             //画像1の特徴点をoutput1に出力
             Image imageLeftSyaei = BitmapConverter.ToBitmap(WarpedSrcMat);
@@ -221,11 +225,11 @@ namespace SaizeriyaMachigasagashi
             /*
             Mat diff = new Mat();
             Cv2.Absdiff(WarpedSrcMat, Rsrc,diff);
-            diff.SaveImage("diff.jpg");
+            diff.SaveImage(@"result\diff.jpg");
 
             Mat diffBitWise = new Mat();
             Cv2.BitwiseOr(WarpedSrcMat, Rsrc, diffBitWise);
-            diff.SaveImage("diffBitWise.jpg");
+            diff.SaveImage(@"result\diffBitWise.jpg");
 
             */
 
@@ -258,19 +262,26 @@ namespace SaizeriyaMachigasagashi
 
             Mat dilationMat = new Mat();
             Cv2.Dilate(openingMat, dilationMat, new Mat());
-            dilationMat.SaveImage("dilationMat.jpg");
+            Cv2.Threshold(dilationMat, dilationMat, 50, 255, ThresholdTypes.Binary);
+            dilationMat.SaveImage(@"result\dilationMat.jpg");
 
             Mat LaddMat = new Mat();
             Mat RaddMat = new Mat();
             Console.WriteLine(dilationMat.GetType());
             Console.WriteLine(Rsrc.GetType());
 
-            Cv2.CvtColor(dilationMat,dilationMat, ColorConversionCodes.BGR2RGB);
+            // dilationMatはグレースケールなので合成先のMatと同じ色空間に変換する
+            Mat dilationScaleMat = new Mat();
+            Mat dilationColorMat = new Mat();
+            Cv2.ConvertScaleAbs(dilationMat, dilationScaleMat);
+            Cv2.CvtColor(dilationScaleMat, dilationColorMat, ColorConversionCodes.GRAY2RGB);
 
-            Cv2.Add(WarpedSrcMat, dilationMat, LaddMat);
-            Cv2.Add(Rsrc, dilationMat, LaddMat);
+            Cv2.AddWeighted(WarpedSrcMat, 0.3, dilationColorMat, 0.7, 0, LaddMat);
+            Cv2.AddWeighted(Rsrc, 0.3, dilationColorMat, 0.7, 0, RaddMat);
+            //Cv2.Add(WarpedSrcMat, dilationColorMat, LaddMat);
+            //Cv2.Add(Rsrc, dilationColorMat, RaddMat);
 
-            Cv2.ImShow("test", RaddMat);
+            //Cv2.ImShow("test", RaddMat);
 
             Image LaddImage = BitmapConverter.ToBitmap(LaddMat);
             pictureBox7.SizeMode = PictureBoxSizeMode.Zoom;
@@ -280,7 +291,9 @@ namespace SaizeriyaMachigasagashi
             pictureBox8.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox8.Image = RaddImage;
 
+            RaddMat.SaveImage(@"result\Result.jpg");
 
+            MessageBox.Show("Done!");
         }
 
     }
