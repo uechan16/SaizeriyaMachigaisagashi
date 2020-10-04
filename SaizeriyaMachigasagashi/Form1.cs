@@ -262,7 +262,7 @@ namespace SaizeriyaMachigasagashi
 
             Mat dilationMat = new Mat();
             Cv2.Dilate(openingMat, dilationMat, new Mat());
-            Cv2.Threshold(dilationMat, dilationMat, 50, 255, ThresholdTypes.Binary);
+            Cv2.Threshold(dilationMat, dilationMat, 100, 255, ThresholdTypes.Binary);
             dilationMat.SaveImage(@"result\dilationMat.jpg");
 
             Mat LaddMat = new Mat();
