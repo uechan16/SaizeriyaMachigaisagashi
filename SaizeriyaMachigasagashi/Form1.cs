@@ -145,19 +145,10 @@ namespace SaizeriyaMachigasagashi
 
             //画像をグレースケールとして読み込み、平滑化する  
             Mat Lsrc = new Mat(sLeftPictureFile, ImreadModes.Color);
-            //Cv2.Resize(Lsrc, Lsrc, new Size(1980, 1080));
-
-            //Lsrc.Blur(new Size(3, 3));
-            //Cv2.AdaptiveThreshold(Lsrc, Lsrc, 255, AdaptiveThresholdTypes.GaussianC, ThresholdTypes.Binary, 9, 12);
 
             //画像をグレースケールとして読み込み、平滑化する  
             Mat Rsrc = new Mat(sRightPictureFile, ImreadModes.Color);
-            //Cv2.Resize(Rsrc, Rsrc, new Size(1980, 1080));
 
-            //Rsrc.Blur(new Size(3, 3));
-            //Cv2.AdaptiveThreshold(Rsrc, Rsrc, 255, AdaptiveThresholdTypes.GaussianC, ThresholdTypes.Binary, 9, 12);
-
-           
             //特徴量の検出と特徴量ベクトルの計算
             akaze.DetectAndCompute(Lsrc, null, out keyPointsLeft, descriptorLeft);
             akaze.DetectAndCompute(Rsrc, null, out keyPointsRight, descriptorRight);
@@ -168,12 +159,16 @@ namespace SaizeriyaMachigasagashi
             Image imageLeftToku = BitmapConverter.ToBitmap(tokuLeft);
             pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox3.Image = imageLeftToku;
+            tokuLeft.SaveImage("result/LeftToku.jpg");
+            
+
 
             //画像2の特徴点をoutput1に出力
             Cv2.DrawKeypoints(Rsrc, keyPointsRight, tokuRight);
             Image imageRightToku = BitmapConverter.ToBitmap(tokuRight);
             pictureBox4.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox4.Image = imageRightToku;
+            tokuRight.SaveImage("result/RightToku.jpg");
 
             //総当たりマッチング
             matcher = DescriptorMatcher.Create("BruteForce");
@@ -217,21 +212,12 @@ namespace SaizeriyaMachigasagashi
             pictureBox5.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox5.Image = imageLeftSyaei;
 
+
             //画像2の特徴点をoutput1に出力
             Image imageRightSyaei = BitmapConverter.ToBitmap(Rsrc);
             pictureBox6.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox6.Image = imageRightSyaei;
 
-            /*
-            Mat diff = new Mat();
-            Cv2.Absdiff(WarpedSrcMat, Rsrc,diff);
-            diff.SaveImage(@"result\diff.jpg");
-
-            Mat diffBitWise = new Mat();
-            Cv2.BitwiseOr(WarpedSrcMat, Rsrc, diffBitWise);
-            diff.SaveImage(@"result\diffBitWise.jpg");
-
-            */
 
             Mat LmatFloat = new Mat();
             WarpedSrcMat.ConvertTo(LmatFloat, MatType.CV_16SC3);
@@ -244,6 +230,7 @@ namespace SaizeriyaMachigasagashi
             Mat diff0 = new Mat();
             Mat diff1 = new Mat();
             Mat diff2 = new Mat();
+            
 
             Cv2.Absdiff(LmatPlanes[0], RmatPlanes[0], diff0);
             Cv2.Absdiff(LmatPlanes[1], RmatPlanes[1], diff1);
@@ -253,9 +240,15 @@ namespace SaizeriyaMachigasagashi
             Cv2.MedianBlur(diff1, diff1, 5);
             Cv2.MedianBlur(diff2, diff2, 5);
 
+            diff0.SaveImage("result/diff0.jpg");
+            diff1.SaveImage("result/diff1.jpg");
+            diff2.SaveImage("result/diff2.jpg");
+
             Mat wiseMat = new Mat();
             Cv2.BitwiseOr(diff0, diff1, wiseMat);
             Cv2.BitwiseOr(wiseMat, diff2, wiseMat);
+
+            wiseMat.SaveImage("result/wiseMat.jpg");
 
             Mat openingMat = new Mat();
             Cv2.MorphologyEx(wiseMat, openingMat, MorphTypes.Open,new Mat());
@@ -278,10 +271,6 @@ namespace SaizeriyaMachigasagashi
 
             Cv2.AddWeighted(WarpedSrcMat, 0.3, dilationColorMat, 0.7, 0, LaddMat);
             Cv2.AddWeighted(Rsrc, 0.3, dilationColorMat, 0.7, 0, RaddMat);
-            //Cv2.Add(WarpedSrcMat, dilationColorMat, LaddMat);
-            //Cv2.Add(Rsrc, dilationColorMat, RaddMat);
-
-            //Cv2.ImShow("test", RaddMat);
 
             Image LaddImage = BitmapConverter.ToBitmap(LaddMat);
             pictureBox7.SizeMode = PictureBoxSizeMode.Zoom;
